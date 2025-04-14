@@ -19,6 +19,8 @@ public class PublicView extends VerticalLayout {
 
     public PublicView() {
         setSpacing(false);
+        // taustaväri vaihdettu
+        getStyle().set("background-color", "#AFDCEB");
 
         Image img = new Image("images/empty-plant.png", "placeholder plant");
         img.setWidth("200px");
@@ -27,7 +29,7 @@ public class PublicView extends VerticalLayout {
         H2 header = new H2("This page is for non authorized users!!");
         header.addClassNames(Margin.Top.XLARGE, Margin.Bottom.MEDIUM);
         add(header);
-        add(new Paragraph("Everybody can see this page!!"));
+        add(new Paragraph("Everybody can see this page!! Hey now i can change background color too, cool!"));
 
         setSizeFull();
         setJustifyContentMode(JustifyContentMode.CENTER);

@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+
 }
 
 .master-detailuser-view vaadin-split-layout {
@@ -11,22 +12,27 @@
 
 .master-detailuser-view vaadin-grid {
   height: 100%;
+  background-color: aliceblue;
 }
 
 .master-detailuser-view .editor-layout {
   display: flex;
   flex-direction: column;
   width: 400px;
+ background-color: azure;
 }
 
 .master-detailuser-view .editor {
   flex-grow: 1;
   padding: var(--lumo-space-l);
+
 }
 
 .master-detailuser-view .editor vaadin-checkbox {
   padding-top: var(--lumo-space-m);
 }
+
+
 
 .master-detailuser-view .button-layout {
   width: 100%;
@@ -41,4 +47,5 @@
 
 .master-detailuser-view .grid-wrapper {
   width: 100%;
+
 }

@@ -4,7 +4,10 @@ vaadin-scroller[slot="drawer"] {
 
 vaadin-side-nav-item vaadin-icon {
   padding: 0;
+  background-color: cornflowerblue;
 }
+
+
 
 [slot="drawer"]:is(header, footer) {
   display: flex;

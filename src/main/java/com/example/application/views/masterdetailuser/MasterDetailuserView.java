@@ -19,6 +19,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.Menu;
@@ -40,6 +41,7 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 @Menu(order = 1, icon = LineAwesomeIconUrl.COLUMNS_SOLID)
 @RolesAllowed("USER")
 public class MasterDetailuserView extends Div implements BeforeEnterObserver {
+
 
     private final String WORKOUT_ID = "workoutID";
     private final String WORKOUT_EDIT_ROUTE_TEMPLATE = "master-detail/%s/edit";
@@ -64,6 +66,7 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
     public MasterDetailuserView(WorkoutService workoutService) {
         this.workoutService = workoutService;
         this.filters = new Filters(this::refreshGrid);
+
         addClassNames("master-detailuser-view");
 
         // Create UI
