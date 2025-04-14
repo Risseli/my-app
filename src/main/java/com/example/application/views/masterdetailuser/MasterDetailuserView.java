@@ -27,7 +27,11 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import jakarta.annotation.security.RolesAllowed;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import com.example.application.views.masterdetailuser.Filters;
+
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
@@ -41,6 +45,8 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
     private final String WORKOUT_EDIT_ROUTE_TEMPLATE = "master-detail/%s/edit";
 
     private final Grid<Workout> grid = new Grid<>(Workout.class, false);
+    private final WorkoutService workoutService;
+
 
     private TextField name;
     private DateTimePicker date;
@@ -51,13 +57,13 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
     private final Button save = new Button("Save");
 
     private final BeanValidationBinder<Workout> binder;
-
     private Workout workout;
+    private Filters filters;
 
-    private final WorkoutService workoutService;
 
     public MasterDetailuserView(WorkoutService workoutService) {
         this.workoutService = workoutService;
+        this.filters = new Filters(this::refreshGrid);
         addClassNames("master-detailuser-view");
 
         // Create UI
@@ -66,6 +72,7 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
         createGridLayout(splitLayout);
         createEditorLayout(splitLayout);
 
+        add(filters);
         add(splitLayout);
 
         // Configure Grid
@@ -73,8 +80,19 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
         grid.addColumn("date").setAutoWidth(true);
         grid.addColumn("duration").setAutoWidth(true);
         grid.addColumn("comment").setAutoWidth(true);
-        grid.setItems(query -> workoutService.list(VaadinSpringDataHelpers.toSpringPageRequest(query)).stream());
+
+        // Filter and set items
+        grid.setItems(query -> {
+            List<Workout> allWorkouts = workoutService.list(
+                    VaadinSpringDataHelpers.toSpringPageRequest(query)
+            ).stream().collect(Collectors.toList());
+
+            List<Workout> filteredWorkouts = filters.applyFilters(allWorkouts);
+
+            return filteredWorkouts.stream();
+        });
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+
 
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
@@ -139,6 +157,7 @@ public class MasterDetailuserView extends Div implements BeforeEnterObserver {
             }
         }
     }
+
 
     private void createEditorLayout(SplitLayout splitLayout) {
         Div editorLayoutDiv = new Div();
