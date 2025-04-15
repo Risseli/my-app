@@ -41,7 +41,11 @@ public class Filters extends HorizontalLayout {
         searchButton = new Button("Search");
         clearButton = new Button("Clear");
 
-        // Set up buttons
+        // tehtävä 2, määritellään yksittäisille elementeille tyyli
+        searchButton.getElement().getStyle().set("background-color", "#4CAF50");
+        clearButton.getElement().getStyle().set("color", "red");
+
+        // asetetaan kuuntelijat
         searchButton.addClickListener(e -> onSearch.run());
         clearButton.addClickListener(e -> clearFilters());
 

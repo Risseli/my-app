@@ -1,6 +1,8 @@
 package com.example.application.data;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,6 +12,11 @@ public class Workout extends AbstractEntity {
     private LocalDateTime date;
     private Integer duration;
     private String comment;
+
+    @OneToOne(mappedBy = "workout")
+    private WorkoutDetails details;
+
+
 
     public String getName() {
         return name;
