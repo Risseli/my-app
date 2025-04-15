@@ -35,7 +35,7 @@ public class Filters extends HorizontalLayout {
         endDateFilter.setPlaceholder("End date...");
 
         durationFilter = new TextField();
-        durationFilter.setPlaceholder("Filter by duration...");
+        durationFilter.setPlaceholder("Filter by minimum duration...");
         durationFilter.setClearButtonVisible(true);
 
         searchButton = new Button("Search");
@@ -78,12 +78,13 @@ public class Filters extends HorizontalLayout {
     }
 
     // Filter predicates
-    private boolean filterByName(Workout workout, String filterValue) {
-        if (filterValue == null || filterValue.isEmpty()) {
-            return true; // No filter applied
+    private boolean filterByName(Workout workout, String nameFilterValue) {
+        if (nameFilterValue == null || nameFilterValue.isEmpty()) {
+            return true;  // Jos hakusana on tyhjä, ei suodateta mitään
         }
-        return workout.getName() != null &&
-                workout.getName().toLowerCase().contains(filterValue.toLowerCase());
+
+        // Palautetaan true, jos workoutin nimi alkaa hakusanalla
+        return workout.getName().toLowerCase().startsWith(nameFilterValue.toLowerCase());
     }
 
     private boolean filterByDuration(Workout workout, String filterValue) {
@@ -92,7 +93,7 @@ public class Filters extends HorizontalLayout {
         }
         try {
             int durationFilter = Integer.parseInt(filterValue);
-            return workout.getDuration() == durationFilter;
+            return workout.getDuration() <= durationFilter;
         } catch (NumberFormatException e) {
             return true; // Invalid number format, don't filter
         }
