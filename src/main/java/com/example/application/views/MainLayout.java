@@ -2,9 +2,12 @@ package com.example.application.views;
 
 import com.example.application.data.User;
 import com.example.application.security.AuthenticatedUser;
+import com.example.application.services.UserService;
+import com.example.application.views.login.RegisterComponent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
@@ -25,6 +28,8 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Optional;
@@ -40,10 +45,15 @@ public class MainLayout extends AppLayout {
 
     private AuthenticatedUser authenticatedUser;
     private AccessAnnotationChecker accessChecker;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker) {
+    public MainLayout(AuthenticatedUser authenticatedUser, AccessAnnotationChecker accessChecker,
+                      UserService userService, PasswordEncoder passwordEncoder) {
         this.authenticatedUser = authenticatedUser;
         this.accessChecker = accessChecker;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
 
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
@@ -116,7 +126,11 @@ public class MainLayout extends AppLayout {
             layout.add(userMenu);
         } else {
             Anchor loginLink = new Anchor("login", "Sign in");
-            layout.add(loginLink);
+            Button registerButton = new Button("Register");
+            RegisterComponent registerComponent = new RegisterComponent(userService, passwordEncoder);
+            registerButton.addClickListener(e -> registerComponent.openRegisterComponent());
+            layout.add(loginLink, registerButton);
+            layout.add(registerComponent);
         }
 
         return layout;
