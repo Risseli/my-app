@@ -4,6 +4,7 @@ import com.example.application.data.User;
 import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.UserService;
 import com.example.application.views.login.RegisterComponent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -18,7 +19,9 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.SvgIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
@@ -37,6 +40,7 @@ import java.util.Optional;
 /**
  * The main view is a top-level placeholder for other views.
  */
+
 @Layout
 @AnonymousAllowed
 public class MainLayout extends AppLayout {
@@ -140,6 +144,14 @@ public class MainLayout extends AppLayout {
     protected void afterNavigation() {
         super.afterNavigation();
         viewTitle.setText(getCurrentPageTitle());
+    }
+
+    private void pushUpdate() {
+        // Tämä metodi voidaan kutsua jollain tavalla, esim. palvelimen tapahtumien perusteella
+        // Lähetetään ilmoitus käyttäjälle
+        UI.getCurrent().access(() -> {
+            Notification.show("Tervetuloa, tämä viesti on generoitu käyttämällä Server push toimintoa!");
+        });
     }
 
     private String getCurrentPageTitle() {

@@ -11,6 +11,7 @@ import com.example.application.services.WorkoutTypeService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -20,6 +21,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+
 
 @Route(value = "user", layout = MainLayout.class)
 @Menu(order = 2, icon = LineAwesomeIconUrl.USER_SOLID)
@@ -70,13 +73,13 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             workouts = new ArrayList<>(workoutService.getWorkoutsByUsername(user.getName()));
 
             if (workouts.isEmpty()) {
-                WorkoutType testType = new WorkoutType("Testiharjoittelu");
+                WorkoutType testType = new WorkoutType("Test workout");
                 workoutTypeService.save(testType);
 
                 for (int i = 1; i <= 20; i++) {
                     Workout workout = new Workout();
-                    workout.setName("Testitreeni " + i);
-                    workout.setComment("Kommentti " + i);
+                    workout.setName("Testworkout " + i);
+                    workout.setComment("Comment " + i);
                     workout.setDuration(20 + i); // esim. 21-30 min
                     workout.setUser(user);
                     workout.setWorkoutType(testType);
@@ -104,20 +107,29 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         IntegerField caloriesField = new IntegerField("Calories");
         IntegerField avgHeartRateField = new IntegerField("Avg HR");
 
-        ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Valitse harjoitustyyppi");
+        ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Choose Workout Type");
 
         List<WorkoutType> workoutTypes = List.of(
-                new WorkoutType("Kestävyysharjoittelu"),
-                new WorkoutType("Voimaharjoittelu"),
-                new WorkoutType("Lihaskuntoharjoittelu"),
-                new WorkoutType("Lajiharjoittelu")
+                new WorkoutType("Endurance training"),
+                new WorkoutType("Strength training"),
+                new WorkoutType("Weight training"),
+                new WorkoutType("Sport related training")
         );
 
         workoutTypeComboBox.setItems(workoutTypes);
         workoutTypeComboBox.setItemLabelGenerator(WorkoutType::getName);
 
+        Button clearButton = new Button("Clear");
+        clearButton.addClickListener(e -> {
+            nameField.clear();
+            commentField.clear();
+            durationField.clear();
+            caloriesField.clear();
+            avgHeartRateField.clear();
+            workoutTypeComboBox.setValue(null);
+        });
 
-        Button addButton = new Button("Lisää harjoitus");
+        Button addButton = new Button("Add Workout");
         addButton.addClickListener(e -> {
             String name = nameField.getValue();
             String comment = commentField.getValue();
@@ -161,13 +173,15 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                 durationField.clear();
                 caloriesField.clear();
                 avgHeartRateField.clear();
+                workoutTypeComboBox.setValue(selectedType);
             }
         });
 
-        HorizontalLayout form = new HorizontalLayout(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, addButton);
-        form.setWidthFull();
-        form.setAlignItems(Alignment.END);
-        add(form);
+        FormLayout formLayout = new FormLayout();
+        formLayout.setWidthFull();
+        formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, addButton, clearButton);
+
+        add(formLayout);
     }
 
 
@@ -227,10 +241,22 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+
+            // Tarkistetaan, onko käyttäjä kirjautunut ja ei ole "user" käyttäjä
             if ("user".equals(user.getUsername())) {
+                // Jos käyttäjä on "user", ohjataan käyttäjä virhesivulle
                 event.rerouteTo("forbidden");
+            } else {
+                // Lähetetään tervetuloviesti käyttäjälle server pushin avulla
+                getUI().ifPresent(ui -> {
+                    ui.access(() -> {
+                        new Notification("Tervetuloa, " + user.getName() + "!", 3000)
+                                .open(); // Tervetuloviesti, joka näytetään 3 sekunnin ajan
+                    });
+                });
             }
         } else {
+            // Jos käyttäjä ei ole kirjautunut sisään, ohjataan kirjautumissivulle
             event.rerouteTo("login");
         }
     }

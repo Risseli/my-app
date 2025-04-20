@@ -1,8 +1,10 @@
 package com.example.application.views.login;
 
 import com.example.application.security.AuthenticatedUser;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.login.LoginI18n;
 import com.vaadin.flow.component.login.LoginOverlay;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -43,4 +45,5 @@ public class LoginView extends LoginOverlay implements BeforeEnterObserver {
 
         setError(event.getLocation().getQueryParameters().getParameters().containsKey("error"));
     }
+
 }
