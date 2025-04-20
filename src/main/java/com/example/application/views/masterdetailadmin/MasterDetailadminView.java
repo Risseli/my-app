@@ -1,7 +1,9 @@
 package com.example.application.views.masterdetailadmin;
 
 import com.example.application.data.SamplePerson;
+import com.example.application.data.User;
 import com.example.application.services.SamplePersonService;
+import com.example.application.services.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -31,12 +33,14 @@ import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import jakarta.annotation.security.RolesAllowed;
 import java.util.Optional;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 @PageTitle("Master-Detail(admin)")
 @Route("master-detail2/:samplePersonID?/:action?(edit)")
 @Menu(order = 2, icon = LineAwesomeIconUrl.COLUMNS_SOLID)
-@RolesAllowed("ADMIN")
+@RolesAllowed({"ADMIN"})
 @Uses(Icon.class)
 public class MasterDetailadminView extends Div implements BeforeEnterObserver {
 
@@ -62,9 +66,11 @@ public class MasterDetailadminView extends Div implements BeforeEnterObserver {
     private SamplePerson samplePerson;
 
     private final SamplePersonService samplePersonService;
+    private final UserService userService;
 
-    public MasterDetailadminView(SamplePersonService samplePersonService) {
+    public MasterDetailadminView(SamplePersonService samplePersonService, UserService userService) {
         this.samplePersonService = samplePersonService;
+        this.userService = userService;
         addClassNames("master-detailadmin-view");
 
         // Create UI
@@ -141,6 +147,25 @@ public class MasterDetailadminView extends Div implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.getByUsername(username);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+
+            // Jos käyttäjällä ei ole oikeuksia (ei ole admin), ohjataan forbidden-sivulle
+            if (!"admin".equals(user.getUsername())) {
+                event.rerouteTo("forbidden");
+                return; // Keskeytetään muu käsittely
+            }
+        } else {
+            // Jos käyttäjä ei ole kirjautunut, ohjataan kirjautumissivulle
+            event.rerouteTo("login");
+            return;
+        }
+
         Optional<Long> samplePersonId = event.getRouteParameters().get(SAMPLEPERSON_ID).map(Long::parseLong);
         if (samplePersonId.isPresent()) {
             Optional<SamplePerson> samplePersonFromBackend = samplePersonService.get(samplePersonId.get());

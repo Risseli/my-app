@@ -23,9 +23,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.Menu;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.*;
 
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.Authentication;
@@ -34,7 +32,6 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -43,7 +40,7 @@ import java.util.function.Consumer;
 @Menu(order = 2, icon = LineAwesomeIconUrl.USER_SOLID)
 @RolesAllowed("USER")
 @PageTitle("Omat reenit")
-public class UserView extends VerticalLayout {
+public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
     private final WorkoutService workoutService;
     private final UserService userService;
@@ -98,6 +95,7 @@ public class UserView extends VerticalLayout {
             createWorkoutGrid();
         }
     }
+
 
     private void createForm(User user) {
         TextField nameField = new TextField("Name");
@@ -220,6 +218,23 @@ public class UserView extends VerticalLayout {
         field.addValueChangeListener(e -> filterChangeListener.accept(e.getValue()));
         return field;
     }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.getByUsername(username);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if ("user".equals(user.getUsername())) {
+                event.rerouteTo("forbidden");
+            }
+        } else {
+            event.rerouteTo("login");
+        }
+    }
+
 
     private static class WorkoutFilter {
         private final GridListDataView<Workout> dataView;
