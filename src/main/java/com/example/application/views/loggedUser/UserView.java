@@ -3,11 +3,14 @@ package com.example.application.views.loggedUser;
 import com.example.application.data.User;
 import com.example.application.data.Workout;
 import com.example.application.data.WorkoutDetails;
+import com.example.application.data.WorkoutType;
 import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.UserService;
 import com.example.application.services.WorkoutService;
+import com.example.application.services.WorkoutTypeService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
@@ -31,6 +34,7 @@ import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -47,10 +51,12 @@ public class UserView extends VerticalLayout {
     private List<Workout> workouts = new ArrayList<>();
     private Grid<Workout> grid;
     private WorkoutFilter workoutFilter;
+    private WorkoutTypeService workoutTypeService;
 
-    public UserView(WorkoutService workoutService, UserService userService) {
+    public UserView(WorkoutService workoutService, UserService userService, WorkoutTypeService workoutTypeService) {
         this.workoutService = workoutService;
         this.userService = userService;
+        this.workoutTypeService = workoutTypeService;
 
         setSizeFull();
         setPadding(true);
@@ -77,6 +83,19 @@ public class UserView extends VerticalLayout {
         IntegerField caloriesField = new IntegerField("Calories");
         IntegerField avgHeartRateField = new IntegerField("Avg HR");
 
+        ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Valitse harjoitustyyppi");
+
+        List<WorkoutType> workoutTypes = List.of(
+                new WorkoutType("Kestävyysharjoittelu"),
+                new WorkoutType("Voimaharjoittelu"),
+                new WorkoutType("Lihaskuntoharjoittelu"),
+                new WorkoutType("Lajiharjoittelu")
+        );
+
+        workoutTypeComboBox.setItems(workoutTypes);
+        workoutTypeComboBox.setItemLabelGenerator(WorkoutType::getName);
+
+
         Button addButton = new Button("Add Workout");
         addButton.addClickListener(e -> {
             String name = nameField.getValue();
@@ -91,6 +110,21 @@ public class UserView extends VerticalLayout {
                 workout.setComment(comment);
                 workout.setDuration(duration);
                 workout.setUser(user);
+
+                WorkoutType selectedType = workoutTypeComboBox.getValue();
+
+                // Tarkista, että se ei ole null ja että WorkoutType on tallennettu
+
+                    // Jos WorkoutType ei ole vielä tietokannassa, tallenna se
+                    if (selectedType.getId() == null) {
+                        workoutTypeService.save(selectedType); // Ei staattinen, ei virhettä                    }
+                    }
+                    // Liitä WorkoutType Workout-objektiin
+                    workout.setWorkoutType(selectedType);
+
+                    // Tallenna Workout
+                    workoutService.save(workout); //
+
 
                 WorkoutDetails details = new WorkoutDetails();
                 details.setCaloriesBurned(calories != null ? calories : 0);
@@ -109,11 +143,12 @@ public class UserView extends VerticalLayout {
             }
         });
 
-        HorizontalLayout form = new HorizontalLayout(nameField, commentField, durationField, caloriesField, avgHeartRateField, addButton);
+        HorizontalLayout form = new HorizontalLayout(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, addButton);
         form.setWidthFull();
         form.setAlignItems(Alignment.END);
         add(form);
     }
+
 
     private void createWorkoutGrid() {
         grid = new Grid<>(Workout.class, false);
@@ -124,7 +159,10 @@ public class UserView extends VerticalLayout {
         Grid.Column<Workout> durationColumn = grid.addColumn(Workout::getDuration).setHeader("Duration");
         Grid.Column<Workout> caloriesColumn = grid.addColumn(w -> w.getDetails() != null ? w.getDetails().getCaloriesBurned() : null).setHeader("Calories");
         Grid.Column<Workout> heartRateColumn = grid.addColumn(w -> w.getDetails() != null ? w.getDetails().getAverageHeartRate() : null).setHeader("Avg HR");
-
+        Grid.Column<Workout> workoutTypeColumn = grid.addColumn(workout -> {
+            WorkoutType type = workout.getWorkoutType();
+            return type != null ? type.getName() : "";
+        }).setHeader("Workout Type");
         dataView = grid.setItems(workouts);
         workoutFilter = new WorkoutFilter(dataView);
 
@@ -157,6 +195,7 @@ public class UserView extends VerticalLayout {
         private String name = "";
         private String comment = "";
         private Integer duration = null;
+
 
         public WorkoutFilter(GridListDataView<Workout> dataView) {
             this.dataView = dataView;

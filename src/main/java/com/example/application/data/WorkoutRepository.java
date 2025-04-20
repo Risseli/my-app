@@ -8,4 +8,5 @@ import java.util.List;
 public interface WorkoutRepository extends JpaRepository<Workout, Long>, JpaSpecificationExecutor<Workout> {
     // Hakee treenit käyttäjän nimen perusteella
     List<Workout> findByUser_Username(String username);
+
 }

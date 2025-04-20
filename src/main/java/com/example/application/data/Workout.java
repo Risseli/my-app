@@ -15,11 +15,23 @@ public class Workout extends AbstractEntity {
     @ManyToOne  // Suhde käyttäjään
     private User user;  // Käyttäjä, johon treeni kuuluu
 
+    @ManyToOne
+    @JoinColumn(name = "workout_type_id")
+    private WorkoutType workoutType;
+
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "details_id")
     private WorkoutDetails details;
 
 
+    public WorkoutType getWorkoutType() {
+        return workoutType;
+    }
+
+    public void setWorkoutType(WorkoutType workoutType) {
+        this.workoutType = workoutType;
+    }
 
     public User getUser() {
         return user;
