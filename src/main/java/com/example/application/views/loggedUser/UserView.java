@@ -177,6 +177,10 @@ public class UserView extends VerticalLayout {
             }
         }));
 
+        // Add filter field for type
+        TextField typeFilterField = createFilterField("Filter workout type", value -> workoutFilter.setType(value));
+        filterRow.getCell(workoutTypeColumn).setComponent(typeFilterField);
+
         add(grid);
     }
 
@@ -195,7 +199,7 @@ public class UserView extends VerticalLayout {
         private String name = "";
         private String comment = "";
         private Integer duration = null;
-
+        private String type = "";
 
         public WorkoutFilter(GridListDataView<Workout> dataView) {
             this.dataView = dataView;
@@ -217,11 +221,18 @@ public class UserView extends VerticalLayout {
             dataView.refreshAll();
         }
 
+        public void setType(String type) {
+            this.type = type.toLowerCase();
+            dataView.refreshAll();
+        }
+
         private boolean filterWorkout(Workout workout) {
             boolean matchesName = workout.getName() != null && workout.getName().toLowerCase().contains(name);
             boolean matchesComment = workout.getComment() != null && workout.getComment().toLowerCase().contains(comment);
             boolean matchesDuration = duration == null || (workout.getDuration() != null && workout.getDuration().equals(duration));
-            return matchesName && matchesComment && matchesDuration;
+            boolean matchesType = type.isEmpty() || (workout.getWorkoutType() != null && workout.getWorkoutType().getName().toLowerCase().contains(type));
+
+            return matchesName && matchesComment && matchesDuration && matchesType;
         }
     }
 }
