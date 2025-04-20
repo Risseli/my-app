@@ -13,8 +13,7 @@ public class WorkoutDetails {
     private String notes;
     private int averageHeartRate;
 
-    @OneToOne
-    @JoinColumn(name = "workout_id", nullable = false)
+    @OneToOne(mappedBy = "details")
     private Workout workout;
 
     public Long getId() {
@@ -29,8 +28,9 @@ public class WorkoutDetails {
         return caloriesBurned;
     }
 
-    public void setCaloriesBurned(int caloriesBurned) {
+    public int setCaloriesBurned(int caloriesBurned) {
         this.caloriesBurned = caloriesBurned;
+        return caloriesBurned;
     }
 
     public String getNotes() {
@@ -44,6 +44,7 @@ public class WorkoutDetails {
     public int getAverageHeartRate() {
         return averageHeartRate;
     }
+
 
     public void setAverageHeartRate(int averageHeartRate) {
         this.averageHeartRate = averageHeartRate;

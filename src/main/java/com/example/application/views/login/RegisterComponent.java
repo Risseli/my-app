@@ -1,5 +1,6 @@
 package com.example.application.views.login;
 
+import com.example.application.data.Role;
 import com.example.application.data.User;
 import com.example.application.services.UserService;
 import com.vaadin.flow.component.UI;
@@ -18,7 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class RegisterComponent extends Div {
 
@@ -99,22 +102,29 @@ public class RegisterComponent extends Div {
 
         save.addClickListener(e -> {
             binder.validate();
-            if(binder.isValid()) {
+            if (binder.isValid()) {
                 try {
                     binder.writeBean(user);
+
+                    // Asetetaan oletusrooli käyttäjälle
+                    Set<Role> roles = new HashSet<>();
+                    roles.add(Role.USER);
+                    user.setRoles(roles);
+
+                    // Tallennetaan käyttäjä tietokantaan
                     userService.save(user);
+
+                    // Kirjautuminen heti rekisteröinnin jälkeen
+                    UI.getCurrent().navigate("login");
+
+                    // Navigoidaan oikeaan näkymään
+                    UI.getCurrent().navigate("user");
+
                     dialog.close();
-                    // jostain syystä antaa virheen ja oltava try cath tässä navigate()
-                    try {
-                        UI.getCurrent().navigate("login");
-                    } catch (Exception ex) {
-                        throw new RuntimeException("NAvigointi ei toiminiut");
-                    }
                 } catch (ValidationException ex) {
                     throw new RuntimeException(ex);
                 }
             }
-
         });
 
         cancel.addClickListener(e -> {

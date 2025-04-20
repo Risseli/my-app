@@ -110,4 +110,3 @@ insert into workout(version, id,name,date,duration,comment) values (1, 4,'Kuntos
 insert into workout(version, id,name,date,duration,comment) values (1, 5,'Uinti','2020-01-19T11:29:29','53','Mahtitreeni !')
 insert into workout(version, id,name,date,duration,comment) values (1, 6,'Tennis','2016-08-15T11:29:29','87','Aika raskasta tänään.')
 insert into workout(version, id,name,date,duration,comment) values (1, 7,'Sähly','2019-08-01T01:03:03','58','Hyvä treeni.')
-

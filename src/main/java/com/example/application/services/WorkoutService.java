@@ -2,11 +2,14 @@ package com.example.application.services;
 
 import com.example.application.data.Workout;
 import com.example.application.data.WorkoutRepository;
+
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class WorkoutService {
@@ -41,4 +44,8 @@ public class WorkoutService {
         return (int) repository.count();
     }
 
+    public List<Workout> getWorkoutsByUsername(String username) {
+        // Tämä metodi voisi hakea käyttäjän treenit tietokannasta
+        return repository.findByUser_Username(username);  // Oletetaan, että Workout-repositoryssä on käyttäjän suodatus
+    }
 }

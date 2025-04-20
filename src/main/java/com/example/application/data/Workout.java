@@ -1,7 +1,6 @@
 package com.example.application.data;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -13,9 +12,34 @@ public class Workout extends AbstractEntity {
     private Integer duration;
     private String comment;
 
-    @OneToOne(mappedBy = "workout")
+    @ManyToOne  // Suhde käyttäjään
+    private User user;  // Käyttäjä, johon treeni kuuluu
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "details_id")
     private WorkoutDetails details;
 
+
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+
+
+    // Getter WorkoutDetails-luokalle
+    public WorkoutDetails getDetails() {
+        return details;
+    }
+
+    // Setter WorkoutDetails-luokalle, jos tarvitaan
+    public void setDetails(WorkoutDetails workoutDetails) {
+        this.details = workoutDetails;
+    }
 
 
     public String getName() {
@@ -42,5 +66,8 @@ public class Workout extends AbstractEntity {
     public void setComment(String comment) {
         this.comment = comment;
     }
+
+
+
 
 }

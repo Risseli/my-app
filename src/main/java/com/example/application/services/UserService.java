@@ -45,4 +45,8 @@ public class UserService {
         return repository.findByUsername(username).isEmpty();
     }
 
+    public Optional<User> getByUsername(String username) {
+        return repository.findByUsername(username);
+    }
+
 }
