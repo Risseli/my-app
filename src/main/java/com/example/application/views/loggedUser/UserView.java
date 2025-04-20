@@ -53,6 +53,7 @@ public class UserView extends VerticalLayout {
     private WorkoutFilter workoutFilter;
     private WorkoutTypeService workoutTypeService;
 
+
     public UserView(WorkoutService workoutService, UserService userService, WorkoutTypeService workoutTypeService) {
         this.workoutService = workoutService;
         this.userService = userService;
@@ -70,6 +71,28 @@ public class UserView extends VerticalLayout {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             workouts = new ArrayList<>(workoutService.getWorkoutsByUsername(user.getName()));
+
+            if (workouts.isEmpty()) {
+                WorkoutType testType = new WorkoutType("Testiharjoittelu");
+                workoutTypeService.save(testType);
+
+                for (int i = 1; i <= 20; i++) {
+                    Workout workout = new Workout();
+                    workout.setName("Testitreeni " + i);
+                    workout.setComment("Kommentti " + i);
+                    workout.setDuration(20 + i); // esim. 21-30 min
+                    workout.setUser(user);
+                    workout.setWorkoutType(testType);
+
+                    WorkoutDetails details = new WorkoutDetails();
+                    details.setCaloriesBurned(200 + i * 10); // esim. 210–300 kcal
+                    details.setAverageHeartRate(110 + i);    // esim. 111–120 bpm
+                    workout.setDetails(details);
+
+                    workoutService.save(workout);
+                    workouts.add(workout);
+                }
+            }
 
             createForm(user);
             createWorkoutGrid();
@@ -96,7 +119,7 @@ public class UserView extends VerticalLayout {
         workoutTypeComboBox.setItemLabelGenerator(WorkoutType::getName);
 
 
-        Button addButton = new Button("Add Workout");
+        Button addButton = new Button("Lisää harjoitus");
         addButton.addClickListener(e -> {
             String name = nameField.getValue();
             String comment = commentField.getValue();
@@ -182,6 +205,11 @@ public class UserView extends VerticalLayout {
         filterRow.getCell(workoutTypeColumn).setComponent(typeFilterField);
 
         add(grid);
+
+        if (workouts.isEmpty()) {
+            WorkoutType testType = new WorkoutType("Testiharjoittelu");
+            workoutTypeService.save(testType);
+        }
     }
 
     private TextField createFilterField(String placeholder, Consumer<String> filterChangeListener) {
