@@ -3,6 +3,10 @@ package com.example.application.data;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Workout extends AbstractEntity {
@@ -24,6 +28,23 @@ public class Workout extends AbstractEntity {
     @JoinColumn(name = "details_id")
     private WorkoutDetails details;
 
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @JoinTable(
+            name = "workout_tag",
+            joinColumns = @JoinColumn(name = "workout_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+
+
+    private Set<Tag> tags = new HashSet<>();
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
 
     public WorkoutType getWorkoutType() {
         return workoutType;

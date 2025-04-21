@@ -1,10 +1,8 @@
 package com.example.application.views.loggedUser;
 
-import com.example.application.data.User;
-import com.example.application.data.Workout;
-import com.example.application.data.WorkoutDetails;
-import com.example.application.data.WorkoutType;
+import com.example.application.data.*;
 import com.example.application.security.AuthenticatedUser;
+import com.example.application.services.TagService;
 import com.example.application.services.UserService;
 import com.example.application.services.WorkoutService;
 import com.example.application.services.WorkoutTypeService;
@@ -27,16 +25,16 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.*;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 @Route(value = "user", layout = MainLayout.class)
@@ -52,12 +50,14 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
     private Grid<Workout> grid;
     private WorkoutFilter workoutFilter;
     private WorkoutTypeService workoutTypeService;
+    private final TagService tagService;
 
 
-    public UserView(WorkoutService workoutService, UserService userService, WorkoutTypeService workoutTypeService) {
+    public UserView(WorkoutService workoutService, UserService userService, WorkoutTypeService workoutTypeService, TagService tagService) {
         this.workoutService = workoutService;
         this.userService = userService;
         this.workoutTypeService = workoutTypeService;
+        this.tagService = tagService;
 
         setSizeFull();
         setPadding(true);
@@ -89,6 +89,12 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                     details.setAverageHeartRate(110 + i);    // esim. 111–120 bpm
                     workout.setDetails(details);
 
+                    Tag tag = new Tag();
+                    tag.setName("Tag " + i);
+                    tagService.save(tag);
+
+                    workout.getTags().add(tag);
+
                     workoutService.save(workout);
                     workouts.add(workout);
                 }
@@ -97,7 +103,10 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             createForm(user);
             createWorkoutGrid();
         }
+
+
     }
+
 
 
     private void createForm(User user) {
@@ -106,6 +115,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         IntegerField durationField = new IntegerField("Duration (min)");
         IntegerField caloriesField = new IntegerField("Calories");
         IntegerField avgHeartRateField = new IntegerField("Avg HR");
+        TextField tagsField = new TextField("Tags");
 
         ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Choose Workout Type");
 
@@ -126,6 +136,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             durationField.clear();
             caloriesField.clear();
             avgHeartRateField.clear();
+            tagsField.clear();
             workoutTypeComboBox.setValue(null);
         });
 
@@ -135,6 +146,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             String comment = commentField.getValue();
             Integer duration = durationField.getValue();
             Integer calories = caloriesField.getValue();
+            String tags = tagsField.getValue();
             Integer avgHeartRate = avgHeartRateField.getValue();
 
             if (name != null && !name.isEmpty() && duration != null) {
@@ -143,6 +155,22 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                 workout.setComment(comment);
                 workout.setDuration(duration);
                 workout.setUser(user);
+
+                // Luo Set<Tag>, jos sitä ei ole vielä
+                Set<Tag> tagSet = new HashSet<>();
+
+                // Oletetaan, että käyttäjä voi syöttää useita tageja, erotettuina pilkulla
+                if (tags != null && !tags.isEmpty()) {
+                    // Erotellaan tagit pilkulla ja lisätään ne Set<Tag>:iin
+                    String[] tagNames = tags.split(",");
+                    for (String tagName : tagNames) {
+                        Tag tag = new Tag();
+                        tag.setName(tagName.trim());  // Poistetaan mahdolliset ylimääräiset välilyönnit
+                        tagSet.add(tag);  // Lisää tagi Set:iin
+                    }
+                }
+
+                workout.setTags(tagSet);  // Aseta tags Set Workout-objektiin
 
                 WorkoutType selectedType = workoutTypeComboBox.getValue();
 
@@ -157,6 +185,10 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
                     // Tallenna Workout
                     workoutService.save(workout); //
+
+                for (Tag tag : tagSet) {
+                    tagService.save(tag);  // Tallenna jokainen tagi
+                }
 
 
                 WorkoutDetails details = new WorkoutDetails();
@@ -173,13 +205,14 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                 durationField.clear();
                 caloriesField.clear();
                 avgHeartRateField.clear();
-                workoutTypeComboBox.setValue(selectedType);
+                tagsField.clear();
+                workoutTypeComboBox.setValue(null);
             }
         });
 
         FormLayout formLayout = new FormLayout();
         formLayout.setWidthFull();
-        formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, addButton, clearButton);
+        formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, tagsField, addButton, clearButton);
 
         add(formLayout);
     }
@@ -194,8 +227,19 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         Grid.Column<Workout> durationColumn = grid.addColumn(Workout::getDuration).setHeader("Duration");
         Grid.Column<Workout> caloriesColumn = grid.addColumn(w -> w.getDetails() != null ? w.getDetails().getCaloriesBurned() : null).setHeader("Calories");
         Grid.Column<Workout> heartRateColumn = grid.addColumn(w -> w.getDetails() != null ? w.getDetails().getAverageHeartRate() : null).setHeader("Avg HR");
-        Grid.Column<Workout> workoutTypeColumn = grid.addColumn(workout -> {
-            WorkoutType type = workout.getWorkoutType();
+        Grid.Column<Workout> tagsColumn = grid.addColumn(workout -> {
+            Set<Tag> tags = workout.getTags();
+            if (tags == null || tags.isEmpty()) {
+                return "";
+            }
+            return tags.stream()
+                    .map(Tag::getName)
+                    .collect(Collectors.joining(", "));
+        }).setHeader("Tags");
+
+
+
+        Grid.Column<Workout> workoutTypeColumn = grid.addColumn(workout -> { WorkoutType type = workout.getWorkoutType();
             return type != null ? type.getName() : "";
         }).setHeader("Workout Type");
         dataView = grid.setItems(workouts);
