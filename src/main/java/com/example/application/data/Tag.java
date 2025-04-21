@@ -1,5 +1,6 @@
 package com.example.application.data;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 
@@ -9,7 +10,9 @@ import java.util.Set;
 @Entity
 public class Tag extends AbstractEntity{
 
+    @Column(unique = true)
     private String name;
+
 
     @ManyToMany(mappedBy = "tags")
     private Set<Workout> workouts = new HashSet<>();

@@ -21,7 +21,7 @@ public class TagService {
     }
 
     public Optional<Tag> findByName(String name) {
-        return tagRepository.findByName(name);
+        return tagRepository.findByName(name).stream().findFirst();
     }
 
     public Tag save(Tag tag) {

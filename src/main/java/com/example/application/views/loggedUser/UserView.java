@@ -45,6 +45,21 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
     private WorkoutTypeService workoutTypeService;
     private final TagService tagService;
 
+    private Button updateButton = new Button("Update");
+    private Button deleteButton = new Button("Delete");
+
+    private Workout selectedWorkout;
+
+    //initializa all textfields
+    private TextField nameField = new TextField("Name");
+    private TextField commentField = new TextField("Comment");
+    private TextField tagsField = new TextField("Tags");
+    private IntegerField durationField = new IntegerField("Duration");
+    private IntegerField caloriesField = new IntegerField("Calories");
+    IntegerField avgHeartRateField = new IntegerField("AVG HeartRate");
+    private ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Workout Type");
+
+
 
     public UserView(WorkoutService workoutService, UserService userService, WorkoutTypeService workoutTypeService, TagService tagService) {
         this.workoutService = workoutService;
@@ -117,17 +132,48 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
     }
 
+    private void populateForm(Workout workout) {
+
+        // Täytetään lomakekentät workout-objektin arvoilla
+        nameField.setValue(workout.getName() != null ? workout.getName() : "");
+        commentField.setValue(workout.getComment() != null ? workout.getComment() : "");
+        durationField.setValue(workout.getDuration() != null ? workout.getDuration() : 0);
+        Integer calories = (workout.getDetails() != null) ? workout.getDetails().getCaloriesBurned() : null;
+        caloriesField.setValue(calories != null ? calories : 0);
+
+        Integer avgHR = (workout.getDetails() != null) ? workout.getDetails().getAverageHeartRate() : null;
+        avgHeartRateField.setValue(avgHR != null ? avgHR : 0);
+
+        // Täytetään ComboBox valitulla WorkoutType:lla
+        workoutTypeComboBox.setValue(workout.getWorkoutType());
+
+        // Muutetaan tagien set String-muotoon pilkuilla erotettuna
+        String tagsAsString = workout.getTags().stream()
+                .map(Tag::getName)
+                .collect(Collectors.joining(", "));
+        tagsField.setValue(tagsAsString);
+
+        // Päivitetään valinnat ja napit
+        updateButton.setEnabled(true);
+        deleteButton.setEnabled(true);
+    }
+
+
 
 
     private FormLayout createForm(User user) {
-        TextField nameField = new TextField("Name");
-        TextField commentField = new TextField("Comment");
-        IntegerField durationField = new IntegerField("Duration (min)");
-        IntegerField caloriesField = new IntegerField("Calories");
-        IntegerField avgHeartRateField = new IntegerField("Avg HR");
-        TextField tagsField = new TextField("Tags");
+      //  TextField nameField = new TextField("Name");
+        nameField.addClassNames("spacing-s", "text-s", "font-medium");
 
-        ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Choose Workout Type");
+        //TextField commentField = new TextField("Comment");
+        commentField.addClassNames("spacing-s", "text-s", "font-medium");
+
+     //   IntegerField durationField = new IntegerField("Duration (min)");
+     //   IntegerField caloriesField = new IntegerField("Calories");
+     //   IntegerField avgHeartRateField = new IntegerField("Avg HR");
+     //   TextField tagsField = new TextField("Tags");
+
+      //  ComboBox<WorkoutType> workoutTypeComboBox = new ComboBox<>("Choose Workout Type");
 
         List<WorkoutType> workoutTypes = List.of(
                 new WorkoutType("Endurance training"),
@@ -140,6 +186,9 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         workoutTypeComboBox.setItemLabelGenerator(WorkoutType::getName);
 
         Button clearButton = new Button("Clear");
+        clearButton.addClassNames("bg-error-10");
+        clearButton.addClassName("border/ALL");
+
         clearButton.addClickListener(e -> {
             nameField.clear();
             commentField.clear();
@@ -151,6 +200,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         });
 
         Button addButton = new Button("Add Workout");
+        addButton.addClassName("bg-success-10");
         addButton.addClickListener(e -> {
             String name = nameField.getValue();
             String comment = commentField.getValue();
@@ -186,15 +236,15 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
                 // Tarkista, että se ei ole null ja että WorkoutType on tallennettu
 
-                    // Jos WorkoutType ei ole vielä tietokannassa, tallenna se
-                    if (selectedType.getId() == null) {
-                        workoutTypeService.save(selectedType); // Ei staattinen, ei virhettä                    }
-                    }
-                    // Liitä WorkoutType Workout-objektiin
-                    workout.setWorkoutType(selectedType);
+                // Jos WorkoutType ei ole vielä tietokannassa, tallenna se
+                if (selectedType.getId() == null) {
+                    workoutTypeService.save(selectedType); // Ei staattinen, ei virhettä                    }
+                }
+                // Liitä WorkoutType Workout-objektiin
+                workout.setWorkoutType(selectedType);
 
-                    // Tallenna Workout
-                    workoutService.save(workout); //
+                // Tallenna Workout
+                workoutService.save(workout); //
 
                 for (Tag tag : tagSet) {
                     tagService.save(tag);  // Tallenna jokainen tagi
@@ -219,14 +269,35 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                 workoutTypeComboBox.setValue(null);
             }
         });
+        Button deleteButton = new Button("Delete");
+        deleteButton.addClickListener(e -> {
+            System.out.println("painettu delete nappia");
+            if (selectedWorkout != null) {
+                System.out.println("selected workout" + selectedWorkout.getId());
+
+                workoutService.delete(selectedWorkout.getId()); // tai delete(selectedWorkout)
+                workouts.remove(selectedWorkout); // ← Tämä on kriittinen!
+                System.out.println("selected workout" + selectedWorkout.getId());
+                Notification.show("Workout deleted");
+                dataView.refreshAll();// Päivitetään näkymä
+                nameField.clear();
+                commentField.clear();
+                durationField.clear();
+                caloriesField.clear();
+                avgHeartRateField.clear();
+                tagsField.clear();
+                workoutTypeComboBox.setValue(null); // Tyhjennetään lomake
+            }
+        });
+
 
         FormLayout formLayout = new FormLayout();
         formLayout.setWidthFull();
-        formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, tagsField, addButton, clearButton);
-
-
+        formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, tagsField, addButton, clearButton, updateButton, deleteButton);
         return formLayout;
     }
+
+
 
 
     private Grid<Workout> createWorkoutGrid() {
@@ -254,6 +325,16 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             return type != null ? type.getName() : "";
         }).setHeader("Workout Type");
         dataView = grid.setItems(workouts);
+
+        grid.asSingleSelect().addValueChangeListener(event -> {
+            selectedWorkout = event.getValue();
+            if (selectedWorkout != null) {
+                populateForm(selectedWorkout);
+                deleteButton.setEnabled(true);
+                updateButton.setEnabled(true);
+            }
+        });
+
         workoutFilter = new WorkoutFilter(dataView);
 
         HeaderRow filterRow = grid.appendHeaderRow();
@@ -277,6 +358,9 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             WorkoutType testType = new WorkoutType("Testiharjoittelu");
             workoutTypeService.save(testType);
         }
+
+
+
         return grid;
     }
 
