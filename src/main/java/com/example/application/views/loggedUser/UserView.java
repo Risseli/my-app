@@ -1,7 +1,6 @@
 package com.example.application.views.loggedUser;
 
 import com.example.application.data.*;
-import com.example.application.security.AuthenticatedUser;
 import com.example.application.services.TagService;
 import com.example.application.services.UserService;
 import com.example.application.services.WorkoutService;
@@ -13,25 +12,19 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.page.Push;
+import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.*;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -100,8 +93,25 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
                 }
             }
 
-            createForm(user);
-            createWorkoutGrid();
+            FormLayout form = createForm(user);
+            Grid<Workout> workoutGrid = createWorkoutGrid();
+
+            SplitLayout splitLayout = new SplitLayout();
+            splitLayout.setSizeFull();
+
+            VerticalLayout leftSide = new VerticalLayout(workoutGrid);
+            leftSide.setSizeFull();
+
+            VerticalLayout rightSide = new VerticalLayout(form);
+            rightSide.setPadding(true);
+            rightSide.setSpacing(true);
+            rightSide.setSizeFull();
+
+            splitLayout.addToPrimary(leftSide);
+            splitLayout.addToSecondary(rightSide);
+            splitLayout.setSplitterPosition(70); // 70% grid, 30% form
+
+            add(splitLayout);
         }
 
 
@@ -109,7 +119,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
 
 
-    private void createForm(User user) {
+    private FormLayout createForm(User user) {
         TextField nameField = new TextField("Name");
         TextField commentField = new TextField("Comment");
         IntegerField durationField = new IntegerField("Duration (min)");
@@ -214,11 +224,12 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         formLayout.setWidthFull();
         formLayout.add(nameField, commentField, durationField, caloriesField, avgHeartRateField, workoutTypeComboBox, tagsField, addButton, clearButton);
 
-        add(formLayout);
+
+        return formLayout;
     }
 
 
-    private void createWorkoutGrid() {
+    private Grid<Workout> createWorkoutGrid() {
         grid = new Grid<>(Workout.class, false);
         grid.setWidthFull();
 
@@ -260,12 +271,13 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         TextField typeFilterField = createFilterField("Filter workout type", value -> workoutFilter.setType(value));
         filterRow.getCell(workoutTypeColumn).setComponent(typeFilterField);
 
-        add(grid);
+
 
         if (workouts.isEmpty()) {
             WorkoutType testType = new WorkoutType("Testiharjoittelu");
             workoutTypeService.save(testType);
         }
+        return grid;
     }
 
     private TextField createFilterField(String placeholder, Consumer<String> filterChangeListener) {
