@@ -93,7 +93,7 @@ public class Filters extends HorizontalLayout {
         }
         try {
             int durationFilter = Integer.parseInt(filterValue);
-            return workout.getDuration() <= durationFilter;
+            return workout.getDuration() >= durationFilter;
         } catch (NumberFormatException e) {
             return true; // Invalid number format, don't filter
         }

@@ -81,31 +81,54 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             workouts = new ArrayList<>(workoutService.getWorkoutsByUsername(user.getName()));
 
             if (workouts.isEmpty()) {
-                WorkoutType testType = new WorkoutType("Test workout");
-                workoutTypeService.save(testType);
+                // Luo ja tallenna workout tyypit
+                List<String> workoutTypeNames = List.of(
+                        "Endurance training",
+                        "Strength training",
+                        "Weight training",
+                        "Sport related training"
+                );
 
+                List<WorkoutType> workoutTypes = new ArrayList<>();
+                for (String typeName : workoutTypeNames) {
+                    WorkoutType type = new WorkoutType(typeName);
+                    workoutTypeService.save(type);
+                    workoutTypes.add(type);
+                }
+
+                // Luo ja tallenna tagit
+//            List<Tag> allTags = new ArrayList<>();
+//            for (int i = 1; i <= 20; i++) {
+//                Tag tag = new Tag();
+//                tag.setName("Tag " + i);
+//                tagService.save(tag); // <-- TÄMÄ tallentaa tagin ja tekee siitä persistentin!
+//                allTags.add(tag);
+//            }
+
+
+                // Luo ja tallenna workoutit
                 for (int i = 1; i <= 20; i++) {
                     Workout workout = new Workout();
                     workout.setName("Testworkout " + i);
                     workout.setComment("Comment " + i);
-                    workout.setDuration(20 + i); // esim. 21-30 min
+                    workout.setDuration(20 + i); // esim. 21-40 min
                     workout.setUser(user);
-                    workout.setWorkoutType(testType);
+
+                    // Valitse workout tyyppi - esim. kierretään listaa i % 4
+                    workout.setWorkoutType(workoutTypes.get(i % workoutTypes.size()));
 
                     WorkoutDetails details = new WorkoutDetails();
-                    details.setCaloriesBurned(200 + i * 10); // esim. 210–300 kcal
-                    details.setAverageHeartRate(110 + i);    // esim. 111–120 bpm
+                    details.setCaloriesBurned(200 + i * 10);
+                    details.setAverageHeartRate(110 + i);
                     workout.setDetails(details);
 
-                    Tag tag = new Tag();
-                    tag.setName("Tag " + i);
-                    tagService.save(tag);
-
-                    workout.getTags().add(tag);
+                    // Liitä tagi
+                    //    workout.getTags().add(allTags.get(i - 1));
 
                     workoutService.save(workout);
                     workouts.add(workout);
                 }
+
             }
 
             FormLayout form = createForm(user);
@@ -340,13 +363,14 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         HeaderRow filterRow = grid.appendHeaderRow();
         filterRow.getCell(nameColumn).setComponent(createFilterField("Filter name", workoutFilter::setName));
         filterRow.getCell(commentColumn).setComponent(createFilterField("Filter comment", workoutFilter::setComment));
-        filterRow.getCell(durationColumn).setComponent(createFilterField("Filter duration", value -> {
+        filterRow.getCell(durationColumn).setComponent(createFilterField("Min duration", value -> {
             try {
                 workoutFilter.setDuration(Integer.parseInt(value));
             } catch (NumberFormatException e) {
                 workoutFilter.setDuration(null);
             }
         }));
+        filterRow.getCell(tagsColumn).setComponent(createFilterField("Tags", workoutFilter::setTag));
 
         // Add filter field for type
         TextField typeFilterField = createFilterField("Filter workout type", value -> workoutFilter.setType(value));
@@ -354,10 +378,10 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
 
 
 
-        if (workouts.isEmpty()) {
-            WorkoutType testType = new WorkoutType("Testiharjoittelu");
-            workoutTypeService.save(testType);
-        }
+//        if (workouts.isEmpty()) {
+//            WorkoutType testType = new WorkoutType("Testiharjoittelu");
+//            workoutTypeService.save(testType);
+//        }
 
 
 
@@ -409,6 +433,7 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         private String comment = "";
         private Integer duration = null;
         private String type = "";
+        private String tag = "";
 
         public WorkoutFilter(GridListDataView<Workout> dataView) {
             this.dataView = dataView;
@@ -434,14 +459,21 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             this.type = type.toLowerCase();
             dataView.refreshAll();
         }
+        public void setTag(String tag) {
+            this.tag = tag;
+            dataView.refreshAll();
+        }
 
         private boolean filterWorkout(Workout workout) {
             boolean matchesName = workout.getName() != null && workout.getName().toLowerCase().contains(name);
             boolean matchesComment = workout.getComment() != null && workout.getComment().toLowerCase().contains(comment);
-            boolean matchesDuration = duration == null || (workout.getDuration() != null && workout.getDuration().equals(duration));
+            boolean matchesDuration = duration == null || workout.getDuration() != null && workout.getDuration() >= duration;
             boolean matchesType = type.isEmpty() || (workout.getWorkoutType() != null && workout.getWorkoutType().getName().toLowerCase().contains(type));
+            boolean matchesTag = tag.isEmpty() || (workout.getTags() != null &&
+                    workout.getTags().stream()
+                            .anyMatch(t -> t.getName().toLowerCase().contains(tag.toLowerCase())));
 
-            return matchesName && matchesComment && matchesDuration && matchesType;
+            return matchesName && matchesComment && matchesDuration && matchesTag && matchesType;
         }
     }
 }
