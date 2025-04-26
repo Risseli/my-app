@@ -14,13 +14,16 @@ import com.vaadin.flow.component.grid.HeaderRow;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.*;
 
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
@@ -219,7 +222,8 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             caloriesField.clear();
             avgHeartRateField.clear();
             tagsField.clear();
-            workoutTypeComboBox.setValue(null);
+            // workoutTypeComboBox.setValue(null);
+            selectedWorkout = null;
         });
 
         Button addButton = new Button("Add Workout");
@@ -313,6 +317,45 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
             }
         });
 
+        updateButton.addClickListener(e -> {
+            if (selectedWorkout != null) {
+                selectedWorkout.setName(nameField.getValue());
+                selectedWorkout.setComment(commentField.getValue());
+                selectedWorkout.setDuration(durationField.getValue());
+
+                // Päivitä WorkoutDetails
+                if (selectedWorkout.getDetails() == null) {
+                    selectedWorkout.setDetails(new WorkoutDetails());
+                }
+                selectedWorkout.getDetails().setCaloriesBurned(caloriesField.getValue());
+                selectedWorkout.getDetails().setAverageHeartRate(avgHeartRateField.getValue());
+
+                // Päivitä WorkoutType
+                WorkoutType selectedType = workoutTypeComboBox.getValue();
+                if (selectedType != null) {
+                    selectedWorkout.setWorkoutType(selectedType);
+                }
+
+
+                // Päivitä tagit, jos käytät niitä
+                // Huom! tässä pitäisi tarkistaa, jos sulla on monivalintaa esim. CheckboxGroup tms.
+
+
+                workoutService.save(selectedWorkout); // Tallennetaan kantaan
+
+
+                dataView.refreshItem(selectedWorkout);
+
+                // Lopuksi tyhjennetään formi
+                clearForm();
+                refreshGrid();
+                Notification.show("Workout updated successfully!");
+
+            }
+        });
+
+
+
 
         FormLayout formLayout = new FormLayout();
         formLayout.setWidthFull();
@@ -320,6 +363,21 @@ public class UserView extends VerticalLayout implements BeforeEnterObserver {
         return formLayout;
     }
 
+    private void refreshGrid() {
+        grid.select(null);
+        grid.getDataProvider().refreshAll();
+    }
+
+
+    private void clearForm() {
+        nameField.clear();
+        commentField.clear();
+        durationField.clear();
+        caloriesField.clear();
+        avgHeartRateField.clear();
+        tagsField.clear();
+        workoutTypeComboBox.setValue(null);
+    }
 
 
 

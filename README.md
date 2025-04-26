@@ -49,3 +49,18 @@ java -jar target/my-app-1.0-SNAPSHOT.jar
 - Find add-ons at [vaadin.com/directory](https://vaadin.com/directory).
 - Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Forum](https://vaadin.com/forum).
 - Report issues, create pull requests in [GitHub](https://github.com/vaadin).
+
+
+Ohjeet ohjelman käyttämiseen:
+
+- Tietokantana käytetty H2, luotu testidataa testaamisen helpottamiseksi. Suositeltavaa kuitenkin luoda jotain itse. 
+- kirjautumaton käyttäjä näkee vain public view sivun jossa ei ole oikeastaan mitään tietoa. 
+- user user käyttäjä näkee vain oman sivun MAsterDetailUserView jossa voi tarkastella eri treenejä käyttäjiltä. 
+Tässä on tehty osa tehtävänannoista. Siinä voi valita jonkin treenin ja päivittää sitä (ei kovin järkevää tosin). 
+Tässä näkymässä on myös kolme suodatinta. 
+- Admin käyttäjälle on oma sivu jota muuta eivät näe.
+- Rekisteröitymisessä vaaditaan 8 merkkiä salasanaksi. Käyttäjätunnukselle ei vaatimuksia. 
+- kirjautunut käyttäjä näkee omat suoritukset ja voi poistaa päivittää ja lisätä suorituksia. 
+Tässä näkymässä päivitys toimii vähän huonosti, jos päivittää samaa kenttää kaksi kertaa, ei anna päivittää.
+Treenejä voi suodattaa viidellä eri suodattimella myös niillä joissa relaatiot.
+tehty myös tyylien muokkaamiset 4 asti. Suodattimet toimii enter napilla. 
